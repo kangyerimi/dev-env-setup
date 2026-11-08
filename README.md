@@ -3,12 +3,6 @@
 > Windows 11 + WSL2(Ubuntu) + Docker Desktop 환경에서 터미널, Docker, Git/GitHub를 직접 세팅하고,
 > 각 단계의 **명령어와 실행 결과**로 동작을 검증한 기록입니다.
 
-<!--
-  📝 작성 가이드 (제출 전에 이 주석은 지워도 됩니다)
-  - "📝 TODO" 라고 적힌 곳은 직접 명령을 실행하고 출력 결과를 붙여넣어야 하는 부분입니다.
-  - 출력은 반드시 코드블록(```) 안에, "$ 명령어" 줄과 "출력"이 함께 보이도록 넣습니다.
-  - 토큰·비밀번호·이메일 등 민감정보는 **** 로 가립니다.
--->
 
 ---
 
@@ -55,11 +49,11 @@
 | 항목 | 값 |
 |---|---|
 | OS | Windows 11 (빌드 10.0.26300) |
-| Linux 환경 | WSL2 + Ubuntu 📝 TODO: `lsb_release -a`의 Release 값 (예: 24.04) |
+| Linux 환경 | WSL2 + Ubuntu 24.04 |
 | 터미널 | Windows Terminal |
 | 쉘 | 터미널/권한 실습: **bash (WSL Ubuntu)** / Docker·Git 실습: **PowerShell** |
 | Docker | Docker Desktop (WSL2 백엔드) — Docker version 29.9.2, build a82e528 |
-| Git | 📝 TODO: `git --version` 결과 |
+| Git | git version 2.56.0.windows.4 |
 | 에디터 | Visual Studio Code |
 
 > 💡 Windows에서는 쉘마다 명령어가 다릅니다 (예: PowerShell의 `move` ↔ bash의 `mv`).
@@ -74,20 +68,19 @@ WSL Ubuntu 설치 기록:
 
 ## 3. 수행 체크리스트
 
-- [ ] [터미널 기본 조작](#5-터미널-조작-로그) (pwd, ls -la, cd, mkdir, cp, mv, rm, cat, touch)
-- [ ] [권한 변경 실습](#6-파일-권한-실습) (파일 1개 + 디렉토리 1개, 변경 전/후)
-- [ ] [Docker 설치/점검](#7-docker-설치-및-점검) (`docker --version`, `docker info`)
-- [ ] [Docker 운영 명령](#8-docker-기본-운영-명령) (images, ps, ps -a, logs, stats)
-- [ ] [hello-world 실행](#91-hello-world)
-- [ ] [ubuntu 컨테이너 진입 + attach/exec 비교](#92-ubuntu-컨테이너)
+- [x] [터미널 기본 조작](#5-터미널-조작-로그) (pwd, ls -la, cd, mkdir, cp, mv, rm, cat, touch)
+- [x] [권한 변경 실습](#6-파일-권한-실습) (파일 1개 + 디렉토리 1개, 변경 전/후)
+- [x] [Docker 설치/점검](#7-docker-설치-및-점검) (`docker --version`, `docker info`)
+- [x] [Docker 운영 명령](#8-docker-기본-운영-명령) (images, ps, ps -a, logs, stats)
+- [x] [hello-world 실행](#91-hello-world)
+- [x] [ubuntu 컨테이너 진입 + attach/exec 비교](#92-ubuntu-컨테이너)
 - [x] [Dockerfile 커스텀 이미지 빌드/실행](#10-dockerfile-커스텀-이미지)
-- [x] [포트 매핑 접속](#11-포트-매핑-접속) (8080 / 📝 8081 추가 예정)
+- [x] [포트 매핑 접속](#11-포트-매핑-접속) (8080, 8081 두 번)
 - [x] [바인드 마운트 반영](#12-바인드-마운트-반영)
-- [ ] [볼륨 영속성](#13-docker-볼륨-영속성)
-- [ ] [Git 설정 + VSCode GitHub 연동](#14-git-설정-및-githubvscode-연동)
-- [x] [트러블슈팅 2건 이상](#15-트러블슈팅)
-
-> 📝 TODO: 각 항목을 완료하면 `[ ]` → `[x]` 로 바꾸세요.
+- [x] [볼륨 영속성](#13-docker-볼륨-영속성)
+- [x] [Git 설정 + VSCode GitHub 연동](#14-git-설정-및-githubvscode-연동)
+- [x] [트러블슈팅 2건 이상](#15-트러블슈팅) (3건)
+- [x] [보너스: Docker Compose](#18-보너스-docker-compose)
 
 ---
 
@@ -693,16 +686,17 @@ f99cea7 작업 중간 백업
 59d7272 개발환경 구축
 ```
 
-### 14.3 VSCode GitHub 로그인 증거
+### 14.3 VSCode GitHub 로그인 및 저장소 연동
 
-📝 TODO: 아래 2장을 캡처해서 첨부하세요.
+**① VSCode에서 GitHub 계정(kangyerimi)으로 로그인한 화면**
 
-1. VSCode 왼쪽 아래 **계정 아이콘(사람 모양)** 클릭 → GitHub 계정으로 로그인된 화면
-2. VSCode **소스 제어(Source Control)** 탭에서 이 저장소가 열려 있고 커밋/푸시한 화면
-
-```
 ![VSCode GitHub 로그인](images/14-vscode-github-login.png)
+
+**② VSCode 소스 제어 화면** — 이 저장소의 변경 파일과 커밋 기록(그래프), 브랜치 `master`가 보임
+
 ![VSCode 소스 제어](images/14-vscode-source-control.png)
+
+이후 VSCode의 **커밋** 버튼으로 `Git 설정 및 VSCode 연동 증거 추가` 커밋을 만들고 GitHub에 push했습니다.
 ```
 
 ---
@@ -860,17 +854,29 @@ services:
     restart: unless-stopped
 ```
 
-📝 TODO: 운영 명령 결과를 붙여넣으세요.
+
 
 ```powershell
-PS> docker compose up -d
-PS> docker compose ps
-(출력 붙여넣기)
-PS> docker compose logs
-(출력 붙여넣기)
-PS> docker compose down
-(출력 붙여넣기)
+PS C:\dev\dev-env-setup> docker compose ps
+NAME      IMAGE          COMMAND                   SERVICE   CREATED          STATUS          PORTS
+dev-web   nginx:alpine   "/docker-entrypoint.…"   web       47 minutes ago   Up 47 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+
+PS C:\dev\dev-env-setup> docker compose logs
+dev-web  | /docker-entrypoint.sh: Configuration complete; ready for start up
+dev-web  | 2026/11/08 03:49:58 [notice] 1#1: nginx/1.31.8
+dev-web  | 2026/11/08 03:49:58 [notice] 1#1: start worker processes
+...
+dev-web  | 172.18.0.1 - - [08/Nov/2026:03:50:24 +0000] "GET / HTTP/1.1" 200 249 "-" "curl/8.21.0" "-"
+dev-web  | 172.18.0.1 - - [08/Nov/2026:03:51:51 +0000] "GET / HTTP/1.1" 200 257 "-" "curl/8.21.0" "-"
+dev-web  | 172.18.0.1 - - [08/Nov/2026:03:52:20 +0000] "GET / HTTP/1.1" 200 257 "-" "Mozilla/5.0 ... Edg/157.0.0.0" "-"
+
+PS C:\dev\dev-env-setup> docker compose down
+[+] down 2/2
+ ✔ Container dev-web             Removed
+ ✔ Network dev-env-setup_default Removed
 ```
+> 💡 로그의 응답 크기가 `249` → `257` 바이트로 바뀐 것은 12장에서 `html/index.html`을 수정한 결과가 바인드 마운트로 즉시 반영되었음을 보여줍니다.
+> `docker compose down`은 컨테이너뿐 아니라 Compose가 만든 네트워크까지 한 번에 정리합니다.
 
 ---
 
