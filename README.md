@@ -434,7 +434,7 @@ CMD ["nginx", "-g", "daemon off;"]
 | `WORKDIR /usr/share/nginx/html` | 이후 명령이 실행될 기준 폴더 지정 = NGINX가 웹 페이지를 읽는 폴더 |
 | `RUN echo ... > index.html` | NGINX 기본 환영 페이지를 나만의 페이지로 교체 |
 | `<meta charset="UTF-8">` | 한글이 깨지지 않도록 문자 인코딩 지정 ([트러블슈팅 2](#트러블슈팅-2-브라우저에서-한글이-깨져-보임)) |
-| `EXPOSE 80` | 컨테이너가 80번 포트를 사용한다는 것을 문서화 |
+| `EXPOSE 80` | 컨테이너가 80번 포트를 사용F한다는 것을 문서화 |
 | `CMD [...]` | 컨테이너 시작 시 NGINX를 포그라운드로 실행 (백그라운드로 가면 컨테이너가 바로 종료됨) |
 
 ### 10.4 빌드 및 실행
@@ -762,6 +762,103 @@ Server:
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
 ```
 
+### 트러블슈팅 4: 포트 충돌 (`port is already allocated`)
+
+| 단계 | 내용 |
+|---|---|
+| **문제** | `docker run -p 8080:80` 실행 시 `Bind for 0.0.0.0:8080 failed: port is already allocated` 에러 발생 |
+| **원인 가설** | 다른 프로그램(또는 다른 컨테이너)이 호스트의 8080 포트를 이미 사용 중이다 |
+| **확인** | ① `netstat`으로 8080을 `LISTENING` 중인 PID 확인 → ② `tasklist`로 PID의 프로그램 이름 확인 → Docker Desktop(`com.docker.backend.exe`)과 WSL 중계 프로그램(`wslrelay.exe`) → ③ Docker가 잡고 있으므로 `docker ps --filter`로 **어느 컨테이너인지** 확인 → `my-web` |
+| **해결** | Docker 프로그램을 강제 종료하면 **모든 컨테이너가 중지**되므로, 원인인 `my-web` 컨테이너만 삭제하여 포트 해제 → `netstat`으로 해제 확인 → 재실행 성공 |
+| **대안** | 기존 컨테이너를 유지해야 한다면 호스트 포트만 바꿔서 실행 (예: `-p 8090:80`) |
+| **배운 점** | Windows + Docker Desktop에서는 `netstat`에 컨테이너가 아니라 **Docker Desktop 프로세스**가 표시된다. 그래서 OS 수준 진단(netstat) → Docker 수준 진단(docker ps) **두 단계**로 찾아야 한다 |
+
+#### 4-1. 충돌 재현
+
+```powershell
+PS C:\dev\dev-env-setup> docker run -d -p 8080:80 --name my-web dev-env-nginx:1.0
+e6459f58de1c27116e6c47a49d5648866d181de8a07c767f2dd059ba6ab16ba3
+
+PS C:\dev\dev-env-setup> docker run -d -p 8080:80 --name port-test nginx:alpine
+1bdf411b80b95f5b8162ba4da8ec77effe0307911dfd63a0e1ef0747b4c9a76b
+docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint port-test (...): Bind for 0.0.0.0:8080 failed: port is already allocated
+```
+
+#### 4-2. 진단 ① 포트를 점유한 프로세스 찾기 (OS 수준)
+
+```powershell
+PS C:\dev\dev-env-setup> netstat -ano | findstr :8080
+  TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       21140
+  TCP    10.70.102.125:60385    10.60.30.12:8080       ESTABLISHED     10492
+  TCP    127.0.0.1:8080         0.0.0.0:0              LISTENING       22300
+  TCP    127.0.0.1:64068        127.0.0.1:8080         TIME_WAIT       0
+  TCP    [::]:8080              [::]:0                 LISTENING       21140
+  TCP    [::1]:8080             [::]:0                 LISTENING       22300
+
+PS C:\dev\dev-env-setup> tasklist /FI "PID eq 21140"
+이미지 이름                    PID 세션 이름              세션#  메모리 사용
+========================= ======== ================ =========== ============
+com.docker.backend.exe       21140 Console                    1    176,132 K
+
+PS C:\dev\dev-env-setup> tasklist /FI "PID eq 22300"
+이미지 이름                    PID 세션 이름              세션#  메모리 사용
+========================= ======== ================ =========== ============
+wslrelay.exe                 22300 Console                    1     12,532 K
+```
+
+**netstat 결과 해석**
+- **로컬 주소(두 번째 칸)가 `:8080`이고 상태가 `LISTENING`** 인 줄이 "8080을 점유한 프로세스"
+- `ESTABLISHED 10492`: 로컬 주소가 `:60385` → 내가 **외부 서버의 8080에 접속**한 연결이라 무관
+- `TIME_WAIT 0`: 이미 종료된 연결의 흔적이라 무관
+- PID 21140 = Docker Desktop 백엔드, PID 22300 = WSL의 localhost 중계 프로그램 → **둘 다 Docker 컨테이너의 포트 매핑 때문에 열린 것**
+
+#### 4-3. 진단 ② 어느 컨테이너인지 찾기 (Docker 수준)
+
+```powershell
+PS C:\dev\dev-env-setup> docker ps --filter "publish=8080"
+CONTAINER ID   IMAGE               COMMAND                   CREATED         STATUS         PORTS                                     NAMES
+e6459f58de1c   dev-env-nginx:1.0   "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
+```
+
+#### 4-4. 해결: 포트 해제 → 확인 → 재실행
+
+```powershell
+# 원인 컨테이너만 삭제 (Docker Desktop 프로세스는 종료하지 않음)
+PS C:\dev\dev-env-setup> docker rm -f my-web
+my-web
+
+# 8080 LISTENING 줄(21140, 22300)이 사라짐 = 포트 해제 확인
+PS C:\dev\dev-env-setup> netstat -ano | findstr :8080
+  TCP    10.70.102.125:60385    10.60.30.12:8080       ESTABLISHED     10492
+  TCP    127.0.0.1:60730        127.0.0.1:8080         TIME_WAIT       0
+
+# 실패 시 '생성됨' 상태로 남은 컨테이너 정리 후 재실행
+PS C:\dev\dev-env-setup> docker rm port-test
+port-test
+PS C:\dev\dev-env-setup> docker run -d -p 8080:80 --name port-test nginx:alpine
+c26d6cae3d6db5c6810c72409f75772da1b14c1e2e3ed3b0e8242caf7eab6164
+
+PS C:\dev\dev-env-setup> docker ps
+CONTAINER ID   IMAGE          COMMAND                   CREATED         STATUS         PORTS                                     NAMES
+c26d6cae3d6d   nginx:alpine   "/docker-entrypoint.…"   5 seconds ago   Up 5 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   port-test
+```
+
+> 💡 `docker rm port-test`가 필요한 이유: 포트 연결에 실패해도 컨테이너는 **생성(Created) 상태로 남아 있어서**, 같은 이름으로 다시 실행하면 `name is already in use` 에러가 난다.
+
+#### 4-5. 참고: 상황별 포트 진단·해제 명령 정리
+
+**Docker 컨테이너가 아닌 일반 프로그램이 포트를 점유한 경우**에는 해당 프로세스를 종료합니다.
+
+| 단계 | Windows (PowerShell/CMD) | Linux / WSL / macOS |
+|---|---|---|
+| 포트 점유 프로세스 찾기 | `netstat -ano \| findstr :8080` | `sudo ss -ltnp \| grep :8080` |
+| (다른 방법) | `Get-NetTCPConnection -LocalPort 8080` | `sudo lsof -i :8080` 또는 `sudo netstat -tlnp \| grep :8080` |
+| PID로 프로그램 이름 확인 | `tasklist /FI "PID eq <PID>"` | `ps -p <PID> -o pid,comm` |
+| 프로세스 종료 (포트 해제) | `taskkill /PID <PID> /F` | `kill <PID>` (안 되면 `kill -9 <PID>`) |
+| 해제 확인 | `netstat -ano \| findstr :8080` 결과에 LISTENING 없음 | `ss -ltnp \| grep :8080` 결과 없음 |
+| Docker 컨테이너인 경우 | `docker ps --filter "publish=8080"` → `docker stop/rm <이름>` | 동일 |
+
+> ⚠️ 프로세스를 종료하기 전에 **그 프로그램이 무엇인지 반드시 확인**한다. Docker Desktop이나 시스템 프로그램을 강제 종료하면 다른 작업까지 중단될 수 있다. 종료가 곤란하면 **호스트 포트를 바꾸는 것**(`-p 8090:80`)이 가장 안전한 대안이다.
 ---
 
 ## 16. 검증 방법 요약
@@ -778,6 +875,7 @@ failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 | 바인드 마운트 | 파일 수정 후 새로고침 | 재빌드 없이 즉시 반영 | [12장](#12-바인드-마운트-반영) |
 | 볼륨 | 컨테이너 삭제 후 `cat` | 데이터 유지 | [13장](#13-docker-볼륨-영속성) |
 | Git/GitHub | `git config --list`, VSCode | 설정값, 로그인·연동 | [14장](#14-git-설정-및-githubvscode-연동) |
+| 포트 충돌 진단 | `netstat -ano`, `tasklist`, `docker ps --filter` | 포트 점유 프로세스·컨테이너 식별, 해제 후 재실행 | [트러블슈팅 4](#트러블슈팅-4-포트-충돌-port-is-already-allocated) |
 
 ---
 
