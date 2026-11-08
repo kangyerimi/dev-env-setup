@@ -109,53 +109,53 @@ dev-env-setup/
 
 **환경:** WSL Ubuntu (bash), 작업 위치는 리눅스 홈 디렉토리(`~`)
 
-> ⚠️ `/mnt/c/...` (Windows 드라이브)가 아니라 `~` 에서 작업했습니다. 이유는 [트러블슈팅 3](#트러블슈팅-3-windows-폴더에서-chmod가-적용되지-않음) 참고.
 
-📝 TODO: 아래 명령을 WSL Ubuntu에서 순서대로 실행하고, 출력 결과를 그대로 붙여넣으세요.
+
 
 ```bash
-# 1) 현재 위치 확인
-$ pwd
-(출력 붙여넣기)
-
-# 2) 작업 디렉토리 생성 후 이동
-$ mkdir -p ~/practice/terminal
-$ cd ~/practice/terminal
-$ pwd
-(출력 붙여넣기)
-
-# 3) 빈 파일 생성 + 숨김 파일 포함 목록 확인
-$ touch empty.txt
-$ echo "hello terminal" > memo.txt
-$ touch .hidden
-$ ls -la
-(출력 붙여넣기 — .hidden 이 보여야 함)
-
-# 4) 파일 내용 확인
-$ cat memo.txt
-(출력 붙여넣기)
-
-# 5) 복사
-$ cp memo.txt memo_copy.txt
-$ ls -l
-(출력 붙여넣기)
-
-# 6) 이름 변경
-$ mv memo_copy.txt renamed.txt
-$ ls -l
-(출력 붙여넣기)
-
-# 7) 다른 디렉토리로 이동
-$ mkdir backup
-$ mv renamed.txt backup/
-$ ls -l backup
-(출력 붙여넣기)
-
-# 8) 삭제 (파일, 디렉토리)
-$ rm empty.txt
-$ rm -r backup
-$ ls -la
-(출력 붙여넣기)
+radiancy63357@GNIA-C202-D05:~$ pwd
+/home/radiancy63357
+radiancy63357@GNIA-C202-D05:~$ mkdir -p ~/practice/terminal
+radiancy63357@GNIA-C202-D05:~$ cd ~/practice/terminal
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ pwd
+/home/radiancy63357/practice/terminal
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ touch empty.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ echo "hello terminal" > memo.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ touch .hidden
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ ls -la
+total 12
+drwxr-xr-x 2 radiancy63357 radiancy63357 4096 Nov  8 11:32 .
+drwxr-xr-x 3 radiancy63357 radiancy63357 4096 Nov  8 11:32 ..
+-rw-r--r-- 1 radiancy63357 radiancy63357    0 Nov  8 11:32 .hidden
+-rw-r--r-- 1 radiancy63357 radiancy63357    0 Nov  8 11:32 empty.txt
+-rw-r--r-- 1 radiancy63357 radiancy63357   15 Nov  8 11:32 memo.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ cat memo.txt
+hello terminal
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ cp memo.txt memo_copy.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ ls -l
+total 8
+-rw-r--r-- 1 radiancy63357 radiancy63357  0 Nov  8 11:32 empty.txt
+-rw-r--r-- 1 radiancy63357 radiancy63357 15 Nov  8 11:32 memo.txt
+-rw-r--r-- 1 radiancy63357 radiancy63357 15 Nov  8 11:32 memo_copy.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ mv memo_copy.txt renamed.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ ls -l
+total 8
+-rw-r--r-- 1 radiancy63357 radiancy63357  0 Nov  8 11:32 empty.txt
+-rw-r--r-- 1 radiancy63357 radiancy63357 15 Nov  8 11:32 memo.txt
+-rw-r--r-- 1 radiancy63357 radiancy63357 15 Nov  8 11:32 renamed.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ mkdir backup
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ mv renamed.txt backup/
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ ls -l backup
+total 4
+-rw-r--r-- 1 radiancy63357 radiancy63357 15 Nov  8 11:32 renamed.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ rm empty.txt
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ rm -r backup
+radiancy63357@GNIA-C202-D05:~/practice/terminal$ ls -la
+total 12
+drwxr-xr-x 2 radiancy63357 radiancy63357 4096 Nov  8 11:32 .
+drwxr-xr-x 3 radiancy63357 radiancy63357 4096 Nov  8 11:32 ..
+-rw-r--r-- 1 radiancy63357 radiancy63357    0 Nov  8 11:32 .hidden
+-rw-r--r-- 1 radiancy63357 radiancy63357   15 Nov  8 11:32 memo.txt
 ```
 
 | 명령 | 의미 |
@@ -170,30 +170,28 @@ $ ls -la
 
 ## 6. 파일 권한 실습
 
-📝 TODO: 아래를 WSL Ubuntu의 `~/practice/terminal` 에서 실행하고 결과를 붙여넣으세요.
+
 
 ### 6.1 파일 권한 변경 (644 → 755)
 
 ```bash
-$ touch script.sh
-$ ls -l script.sh          # 변경 전
-(출력 붙여넣기 — 예: -rw-r--r-- ... script.sh)
-
-$ chmod 755 script.sh
-$ ls -l script.sh          # 변경 후
-(출력 붙여넣기 — 예: -rwxr-xr-x ... script.sh)
+radiancy63357@GNIA-C202-D05:~$ touch script.sh
+radiancy63357@GNIA-C202-D05:~$ ls -l script.sh
+-rw-r--r-- 1 radiancy63357 radiancy63357 0 Nov  8 11:45 script.sh
+radiancy63357@GNIA-C202-D05:~$ chmod 755 script.sh
+radiancy63357@GNIA-C202-D05:~$ ls -l script.sh
+-rwxr-xr-x 1 radiancy63357 radiancy63357 0 Nov  8 11:45 script.sh
 ```
 
 ### 6.2 디렉토리 권한 변경 (755 → 700)
 
 ```bash
-$ mkdir secret_dir
-$ ls -ld secret_dir        # 변경 전
-(출력 붙여넣기 — 예: drwxr-xr-x ... secret_dir)
-
-$ chmod 700 secret_dir
-$ ls -ld secret_dir        # 변경 후
-(출력 붙여넣기 — 예: drwx------ ... secret_dir)
+radiancy63357@GNIA-C202-D05:~$ mkdir secret_dir
+radiancy63357@GNIA-C202-D05:~$ ls -ld secret_dir
+drwxr-xr-x 2 radiancy63357 radiancy63357 4096 Nov  8 11:45 secret_dir
+radiancy63357@GNIA-C202-D05:~$ chmod 700 secret_dir
+radiancy63357@GNIA-C202-D05:~$ ls -ld secret_dir
+drwx------ 2 radiancy63357 radiancy63357 4096 Nov  8 11:45 secret_dir
 ```
 
 ### 6.3 결과 비교
@@ -209,14 +207,34 @@ $ ls -ld secret_dir        # 변경 후
 
 ## 7. Docker 설치 및 점검
 
-📝 TODO: PowerShell에서 실행 후 결과를 붙여넣으세요. (`docker info`는 길기 때문에 앞부분 20줄 정도만 발췌해도 됩니다.)
+
 
 ```powershell
 PS> docker --version
 Docker version 29.9.2, build a82e528
 
 PS> docker info
-(출력 붙여넣기 — Server: 부분에 Containers, Images, Server Version 이 보이면 데몬이 동작 중)
+Client:
+ Version:    29.9.2
+ Context:    desktop-linux
+ (플러그인 목록 생략)
+
+Server:
+ Containers: 1
+  Running: 1
+  Paused: 0
+  Stopped: 0
+ Images: 3
+ Server Version: 29.9.2
+ Storage Driver: overlayfs
+ Cgroup Version: 2
+ Kernel Version: 6.18.54.1-microsoft-standard-WSL2
+ Operating System: Docker Desktop
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 24
+ Total Memory: 15.25GiB
+ Name: docker-desktop
 ```
 
 **확인 포인트:** `docker info` 출력에 `Server:` 섹션이 나오면 Docker 데몬(엔진)이 정상 실행 중입니다.
@@ -596,17 +614,25 @@ Mode                 LastWriteTime         Length Name
 
 📝 TODO: 수정 후 한글이 정상으로 나오는 화면 캡처 첨부 → `![한글 정상](images/15-ts2-fixed.png)`
 
-### 트러블슈팅 3: Windows 폴더에서 chmod가 적용되지 않음
-
-> 📝 TODO: 직접 겪었다면 출력 결과를 넣고, 아니라면 이 항목은 삭제해도 됩니다 (필수는 2건).
-> 확인 방법: WSL에서 `cd /mnt/c/Users/<사용자명>` 후 `touch test.txt; chmod 600 test.txt; ls -l test.txt` 실행
+### 트러블슈팅 3: `docker info`에서 Docker 데몬 연결 실패
 
 | 단계 | 내용 |
 |---|---|
-| **문제** | WSL에서 `/mnt/c/...` 폴더의 파일에 `chmod 600`을 했는데 `ls -l` 결과가 `-rwxrwxrwx`로 그대로 |
-| **원인 가설** | Windows 파일 시스템(NTFS)은 리눅스 권한 체계를 그대로 지원하지 않는다 |
-| **확인** | 리눅스 홈(`~`)에서 같은 명령을 실행하니 권한이 정상적으로 바뀜 |
-| **해결** | 권한 실습은 WSL 리눅스 파일 시스템(`~`)에서 진행 |
+| **문제** | `docker info` 실행 시 `Client:` 정보는 나오지만 `Server:` 아래에 연결 실패 에러 발생 |
+| **원인 가설** | docker 명령어(클라이언트)는 설치되어 있지만, 실제 일을 하는 Docker 엔진(데몬)이 실행되지 않았다 |
+| **확인** | 에러 메시지에 `daemon is running`을 확인하라는 문구가 있음. 작업 표시줄에 Docker Desktop 고래 아이콘이 없었음 → Docker Desktop이 꺼져 있었음 |
+| **해결** | Docker Desktop 실행 → 왼쪽 아래 `Engine running` 확인 → `docker info` 재실행 시 `Server:` 정보 정상 출력 |
+| **배운 점** | Docker는 **클라이언트(명령어)** 와 **서버(데몬)** 로 나뉜다. Windows에서는 Docker Desktop을 켜야 데몬이 실행된다 |
+
+```powershell
+PS> docker info
+Client:
+ Version:    29.9.2
+ Context:    desktop-linux
+ ...
+Server:
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+```
 
 ---
 
