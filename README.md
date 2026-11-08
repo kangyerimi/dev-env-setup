@@ -630,19 +630,34 @@ volume persistence test
 
 ### 14.1 Git 사용자 정보 및 기본 브랜치 설정
 
-📝 TODO
 
 ```powershell
 PS> git --version
-(출력 붙여넣기)
+git version 2.56.0.windows.4
 
 PS> git config --global user.name "KANG YERIM"
-PS> git config --global user.email "****@****.com"
+PS> git config --global user.email "****@naver.com"
 PS> git config --global init.defaultBranch main
 
 PS> git config --list
-(출력 붙여넣기 — user.email 은 ****로 가리기)
+diff.astextplain.textconv=astextplain
+filter.lfs.clean=git-lfs clean -- %f
+filter.lfs.smudge=git-lfs smudge -- %f
+filter.lfs.process=git-lfs filter-process
+filter.lfs.required=true
+http.sslbackend=schannel
+core.autocrlf=true
+core.fscache=true
+core.symlinks=false
+pull.rebase=false
+credential.helper=manager
+credential.https://dev.azure.com.usehttppath=true
+init.defaultbranch=master
+user.name=KANG YERIM
+user.email=****@naver.com
+init.defaultbranch=main
 ```
+> 💡 `init.defaultbranch`가 두 번 나오는 이유: 위의 `master`는 Git 설치 시 정해진 **시스템 설정**, 아래의 `main`은 내가 설정한 **사용자(global) 설정**입니다. Git은 나중에 읽은 사용자 설정을 우선 적용하므로, 앞으로 새로 만드는 저장소는 `main` 브랜치로 시작합니다. (이 저장소는 기존 `master` 브랜치를 그대로 사용)
 
 ### 14.2 GitHub 저장소 생성 및 연동
 
@@ -662,13 +677,20 @@ remote: Total 6 (delta 0), reused 6 (delta 0), pack-reused 0 (from 0)
 Receiving objects: 100% (6/6), 237.37 KiB | 21.58 MiB/s, done.
 ```
 
-📝 TODO: 원격 저장소 연결 확인
+
 
 ```powershell
-PS> git remote -v
-(출력 붙여넣기)
-PS> git log --oneline
-(출력 붙여넣기)
+PS C:\dev\dev-env-setup> git remote -v
+origin  https://github.com/kangyerimi/dev-env-setup.git (fetch)
+origin  https://github.com/kangyerimi/dev-env-setup.git (push)
+
+PS C:\dev\dev-env-setup> git log --oneline
+70f0315 (HEAD -> master, origin/master, origin/HEAD) 바인드 마운트, 볼륨 로그 추가
+397ac3b Docker 운영, 컨테이너 실습, 포트 매핑 로그 추가
+dd41696 터미널, 권한, Docker 점검 로그 추가
+d8554c1 README 구조 개편, 스크린샷 이름 정리, Dockerfile 한글 깨짐 수정
+f99cea7 작업 중간 백업
+59d7272 개발환경 구축
 ```
 
 ### 14.3 VSCode GitHub 로그인 증거
