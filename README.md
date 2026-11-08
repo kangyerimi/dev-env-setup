@@ -244,35 +244,63 @@ Docker Desktop이 꺼져 있으면 `error during connect` 에러가 납니다.
 
 ## 8. Docker 기본 운영 명령
 
-📝 TODO: 아래 명령을 실행하고 결과를 붙여넣으세요.
+
 
 ```powershell
-# 이미지 다운로드 / 목록
 PS> docker pull nginx:alpine
-(출력 붙여넣기)
+alpine: Pulling from library/nginx
+da90db506dd5: Pull complete
+...
+Digest: sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+Status: Downloaded newer image for nginx:alpine
+docker.io/library/nginx:alpine
+
 PS> docker images
-(출력 붙여넣기)
+IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA
+dev-env-nginx:1.0    e36abcadef99       93.6MB         26.3MB    U
+hello-world:latest   c567b231f656       25.9kB         9.49kB
+nginx:alpine         713fc2ebfd92       94.5MB         27.3MB
 
-# 실행 중인 컨테이너 / 전체 컨테이너(종료된 것 포함)
-PS> docker ps
-(출력 붙여넣기)
 PS> docker ps -a
-(출력 붙여넣기)
+CONTAINER ID   IMAGE               COMMAND                   CREATED          STATUS          PORTS                                     NAMES
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   10 minutes ago   Up 10 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   20 minutes ago   Up 20 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 
-# 컨테이너 중지 후 상태 확인
 PS> docker stop my-web
+my-web
+
 PS> docker ps -a
-(출력 붙여넣기 — STATUS가 Exited 로 바뀐 것 확인)
+CONTAINER ID   IMAGE               COMMAND                   CREATED          STATUS                     PORTS                                     NAMES
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   10 minutes ago   Up 10 minutes              0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   21 minutes ago   Exited (0) 7 seconds ago                                             my-web
+
 PS> docker start my-web
+my-web
 
-# 로그 확인 (브라우저로 접속한 기록이 남아 있음)
 PS> docker logs my-web
-(출력 붙여넣기 — "GET / HTTP/1.1" 200 같은 접속 로그)
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2026/11/08 03:08:03 [notice] 1#1: nginx/1.31.8
+2026/11/08 03:08:03 [notice] 1#1: start worker processes
+...
+172.17.0.1 - - [08/Nov/2026:03:10:40 +0000] "GET / HTTP/1.1" 200 248 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ... Edg/157.0.0.0" "-"
+172.17.0.1 - - [08/Nov/2026:03:15:57 +0000] "GET / HTTP/1.1" 200 248 "-" "curl/8.21.0" "-"
+172.17.0.1 - - [08/Nov/2026:03:19:24 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 ... Edg/157.0.0.0" "-"
+2026/11/08 03:29:03 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+...
+2026/11/08 03:29:03 [notice] 1#1: exit
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2026/11/08 03:29:17 [notice] 1#1: start worker processes
 
-# 리소스 사용량 (한 번만 출력)
 PS> docker stats --no-stream
-(출력 붙여넣기)
+CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+b36b991056c0   my-web-8081   0.00%     18.24MiB / 15.25GiB   0.12%     4.37kB / 3.53kB   0B / 12.3kB   25
+e755f7c6e2f6   my-web        0.00%     20.68MiB / 15.25GiB   0.13%     872B / 126B       0B / 0B       25
 ```
+**확인한 것**
+- `docker stop` 후 `STATUS`가 `Up` → `Exited (0)` 으로 바뀜 (0 = 정상 종료)
+- `docker logs`에 브라우저(Edg)와 curl의 접속 기록(`GET / ... 200`)이 남아 있음
+- 로그의 `SIGQUIT received, shutting down` 은 `docker stop` 명령으로 NGINX가 종료된 기록이고, 이어서 `docker start`로 다시 시작된 기록이 이어짐
+- `docker stats`로 두 컨테이너가 각각 약 20MiB 메모리를 사용 중인 것 확인
 
 실행 중인 컨테이너 확인 (기존 기록):
 
@@ -284,49 +312,83 @@ PS> docker stats --no-stream
 
 ### 9.1 hello-world
 
-📝 TODO
+
 
 ```powershell
-PS> docker run hello-world
-(출력 붙여넣기 — "Hello from Docker!" 문구 포함)
+PS C:\dev\dev-env-setup> docker run hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
 ```
 
 ### 9.2 ubuntu 컨테이너
 
-📝 TODO
+
 
 ```powershell
-# 대화형으로 실행 후 내부 진입
-PS> docker run -it --name my-ubuntu ubuntu bash
-root@xxxx:/# ls
-(출력 붙여넣기)
-root@xxxx:/# echo "hello from container"
+PS C:\dev\dev-env-setup> docker run -it --name my-ubuntu ubuntu bash
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+f3f25b84a7d7: Pull complete
+edafa32f5d9e: Pull complete
+21594acc2d8b: Download complete
+Status: Downloaded newer image for ubuntu:latest
+root@23ec7a648b72:/# ls
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+root@23ec7a648b72:/# echo "hello from container"
 hello from container
-root@xxxx:/# exit
+root@23ec7a648b72:/# exit
+exit
 
-PS> docker ps -a
-(출력 붙여넣기 — my-ubuntu 가 Exited 상태인 것 확인)
+PS C:\dev\dev-env-setup> docker ps -a
+CONTAINER ID   IMAGE               COMMAND                   CREATED              STATUS                     PORTS                                     NAMES
+23ec7a648b72   ubuntu              "bash"                    About a minute ago   Exited (0) 5 seconds ago                                             my-ubuntu
+a5f80fb3ec0b   hello-world         "/hello"                  2 minutes ago        Exited (0) 2 minutes ago                                             elastic_diffie
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   20 minutes ago       Up 20 minutes              0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   31 minutes ago       Up 10 minutes              0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 ```
 
 ### 9.3 attach vs exec 비교
 
-📝 TODO
+
 
 ```powershell
-# 백그라운드로 다시 시작
-PS> docker start my-ubuntu
+PS C:\dev\dev-env-setup> docker start my-ubuntu
+my-ubuntu
 
 # (1) exec: 새로운 bash를 하나 더 열어서 들어감
-PS> docker exec -it my-ubuntu bash
-root@xxxx:/# exit
-PS> docker ps
-(출력 붙여넣기 — my-ubuntu 가 여전히 Up 상태)
+PS C:\dev\dev-env-setup> docker exec -it my-ubuntu bash
+root@23ec7a648b72:/# docker ps
+bash: docker: command not found        ← 컨테이너 안에는 docker가 없음 (격리 확인)
+root@23ec7a648b72:/# exit
+exit
+
+PS C:\dev\dev-env-setup> docker ps
+CONTAINER ID   IMAGE               COMMAND                   CREATED          STATUS          PORTS                                     NAMES
+23ec7a648b72   ubuntu              "bash"                    6 minutes ago    Up 2 minutes                                              my-ubuntu
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   26 minutes ago   Up 26 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   37 minutes ago   Up 15 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 
 # (2) attach: 컨테이너의 원래(메인) bash에 붙음
-PS> docker attach my-ubuntu
-root@xxxx:/# exit
-PS> docker ps -a
-(출력 붙여넣기 — my-ubuntu 가 Exited 로 바뀜)
+PS C:\dev\dev-env-setup> docker attach my-ubuntu
+root@23ec7a648b72:/# exit
+exit
+
+PS C:\dev\dev-env-setup> docker ps -a
+CONTAINER ID   IMAGE               COMMAND                   CREATED          STATUS                      PORTS                                     NAMES
+23ec7a648b72   ubuntu              "bash"                    7 minutes ago    Exited (0) 13 seconds ago                                             my-ubuntu
+a5f80fb3ec0b   hello-world         "/hello"                  8 minutes ago    Exited (0) 8 minutes ago                                              elastic_diffie
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   27 minutes ago   Up 27 minutes               0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   37 minutes ago   Up 16 minutes               0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 ```
 
 **관찰 결과 정리**
@@ -384,21 +446,25 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ### 10.4 빌드 및 실행
 
-📝 TODO: Dockerfile 수정 후 다시 빌드하고 결과를 붙여넣으세요.
+PS C:\dev\dev-env-setup> docker build -t dev-env-nginx:1.0 .
+[+] Building 0.5s (7/7) FINISHED                                     docker:desktop-linux
+ => [internal] load build definition from Dockerfile                                0.0s
+ => => transferring dockerfile: 767B                                                0.0s
+ => [internal] load metadata for docker.io/library/nginx:alpine                     0.0s
+ => [internal] load .dockerignore                                                   0.0s
+ => [1/3] FROM docker.io/library/nginx:alpine@sha256:785835ea65db...                0.0s
+ => CACHED [2/3] WORKDIR /usr/share/nginx/html                                      0.0s
+ => [3/3] RUN echo '<!DOCTYPE html><html><head><meta charset="UTF-8">...            0.2s
+ => exporting to image                                                              0.2s
+ => => naming to docker.io/library/dev-env-nginx:1.0                                0.0s
+ => => unpacking to docker.io/library/dev-env-nginx:1.0                             0.0s
 
-```powershell
-PS> cd C:\dev\dev-env-setup
-PS> docker build -t dev-env-nginx:1.0 .
-(출력 붙여넣기 — 마지막에 "naming to docker.io/library/dev-env-nginx:1.0" 확인)
+PS C:\dev\dev-env-setup> docker run -d -p 8080:80 --name my-web dev-env-nginx:1.0
+e755f7c6e2f6098fb2442f36b0ebf9eea598675922288376ba057dac76905b43
 
-PS> docker images dev-env-nginx
-(출력 붙여넣기)
-
-PS> docker run -d -p 8080:80 --name my-web dev-env-nginx:1.0
-(컨테이너 ID 출력)
-
-PS> docker ps
-(출력 붙여넣기)
+PS C:\dev\dev-env-setup> docker ps
+CONTAINER ID   IMAGE               COMMAND                   CREATED         STATUS         PORTS                                     NAMES
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   8 seconds ago   Up 7 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 ```
 
 ---
@@ -413,29 +479,33 @@ PS> docker ps
 
 ### 11.1 8080 포트 접속
 
-📝 TODO: Dockerfile 수정·재빌드 후 다시 캡처해서 아래 이미지를 교체하세요. (주소창 `localhost:8080`이 보이게)
+
 
 ```powershell
 PS> curl.exe http://localhost:8080
-(출력 붙여넣기 — HTML 코드가 응답으로 나옴)
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Dev Env Setup</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h1>Hello from KANG YERIM Docker!</h1><p>개발 환경 구축 과제 성공!</p></body></html>
 ```
 
 ![8080 접속 화면](images/06-port-8080.png)
 
 ### 11.2 같은 이미지를 8081 포트로 한 번 더 실행
 
-📝 TODO: 같은 이미지로 컨테이너를 2개 띄울 수 있음을 보여주는 실습입니다.
+
 
 ```powershell
-PS> docker run -d -p 8081:80 --name my-web-8081 dev-env-nginx:1.0
-PS> docker ps
-(출력 붙여넣기 — 8080, 8081 두 컨테이너가 모두 Up)
-PS> curl.exe http://localhost:8081
-(출력 붙여넣기)
+PS C:\dev\dev-env-setup> docker run -d -p 8081:80 --name my-web-8081 dev-env-nginx:1.0
+b36b991056c075040e3dfe478ba756aa9605870a44b562bd5f410698a59a3590
+
+PS C:\dev\dev-env-setup> docker ps
+CONTAINER ID   IMAGE               COMMAND                   CREATED          STATUS          PORTS                                     NAMES
+b36b991056c0   dev-env-nginx:1.0   "/docker-entrypoint.…"   6 seconds ago    Up 5 seconds    0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   my-web-8081
+e755f7c6e2f6   dev-env-nginx:1.0   "/docker-entrypoint.…"   10 minutes ago   Up 10 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
+
+PS C:\dev\dev-env-setup> curl.exe http://localhost:8081
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Dev Env Setup</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h1>Hello from KANG YERIM Docker!</h1><p>개발 환경 구축 과제 성공!</p></body></html>
 ```
 
-📝 TODO: `localhost:8081` 브라우저 캡처 첨부 → `![8081 접속 화면](images/07-port-8081.png)`
-
+![8081 접속 화면](images/07-port-8081.png)
 > 💡 PowerShell에서 그냥 `curl`은 다른 명령(`Invoke-WebRequest`)으로 동작하므로 `curl.exe`로 입력합니다.
 
 ---
@@ -612,7 +682,9 @@ Mode                 LastWriteTime         Length Name
 
 ![한글 깨짐](images/15-ts2-garbled.png)
 
-📝 TODO: 수정 후 한글이 정상으로 나오는 화면 캡처 첨부 → `![한글 정상](images/15-ts2-fixed.png)`
+**해결 후 (한글 정상 표시):**
+
+![한글 정상](images/06-port-8080.png)
 
 ### 트러블슈팅 3: `docker info`에서 Docker 데몬 연결 실패
 
