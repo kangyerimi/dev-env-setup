@@ -439,6 +439,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ### 10.4 빌드 및 실행
 
+````powershell
 PS C:\dev\dev-env-setup> docker build -t dev-env-nginx:1.0 .
 [+] Building 0.5s (7/7) FINISHED                                     docker:desktop-linux
  => [internal] load build definition from Dockerfile                                0.0s
@@ -697,7 +698,6 @@ f99cea7 작업 중간 백업
 ![VSCode 소스 제어](images/14-vscode-source-control.png)
 
 이후 VSCode의 **커밋** 버튼으로 `Git 설정 및 VSCode 연동 증거 추가` 커밋을 만들고 GitHub에 push했습니다.
-```
 
 ---
 
