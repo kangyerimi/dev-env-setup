@@ -516,70 +516,110 @@ PS C:\dev\dev-env-setup> curl.exe http://localhost:8081
 
 ### 12.1 실행 명령
 
-`docker-compose.yml`로 실행했습니다 (`volumes: - ./html:/usr/share/nginx/html`).
+`docker-compose.yml`의 `volumes: - ./html:/usr/share/nginx/html` 설정으로 바인드 마운트를 연결했습니다.
+
+```powershell
+PS C:\dev\dev-env-setup> docker compose up -d
+[+] up 2/2
+ ✔ Network dev-env-setup_default Created
+ ✔ Container dev-web             Started
+
+PS C:\dev\dev-env-setup> docker ps
+CONTAINER ID   IMAGE          COMMAND                   CREATED         STATUS         PORTS                                     NAMES
+1b80d62a6c0d   nginx:alpine   "/docker-entrypoint.…"   9 seconds ago   Up 8 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   dev-web
+```
+
 같은 동작을 `docker run`으로 쓰면 아래와 같습니다.
 
 ```powershell
-# Compose 방식 (실제 사용)
-PS> docker compose up -d
-(출력 붙여넣기)
-
-# docker run 방식 (동일한 의미)
-PS> docker run -d -p 8080:80 -v ${PWD}/html:/usr/share/nginx/html --name dev-web nginx:alpine
+docker run -d -p 8080:80 -v ${PWD}/html:/usr/share/nginx/html --name dev-web nginx:alpine
 ```
-
-> ⚠️ `my-web` 컨테이너가 8080을 쓰고 있으면 충돌하므로 먼저 `docker rm -f my-web` 으로 정리합니다.
 
 ### 12.2 변경 전 / 후 비교
 
-📝 TODO: 각 단계에서 `type html\index.html` (PowerShell) 출력도 함께 붙여넣으면 더 확실합니다.
+**① 변경 전** — 호스트 파일 내용과 웹 응답
 
-**① 변경 전** — `html/index.html` 내용과 브라우저 화면
-
-![변경 전 index.html](images/12-bind-before-code.png)
-![변경 전 화면](images/12-bind-before.png)
-
-**② 호스트에서 `html/index.html` 수정** (컨테이너 재시작·재빌드 없이 새로고침만)
-
-```html
+```powershell
+PS C:\dev\dev-env-setup> type html\index.html -Encoding UTF8
+...
 <h1>🚀 Docker 마스터!</h1>
 <p>바인드 마운트 완벽 이해! ✨</p>
 <p>오늘도 열심히 공부 중! 💪</p>
+...
+
+PS C:\dev\dev-env-setup> curl.exe http://localhost:8080
+...
+<h1>🚀 Docker 마스터!</h1>
+<p>바인드 마운트 완벽 이해! ✨</p>
+<p>오늘도 열심히 공부 중! 💪</p>
+...
 ```
 
-**③ 변경 후** — 새로고침만으로 바로 반영됨
+![변경 전 화면](images/12-bind-after.png)
 
-![변경 후 화면](images/12-bind-after.png)
+**② 호스트(내 PC)에서 `html/index.html` 수정** — VSCode에서 마지막 문장만 변경 후 저장
 
+```diff
+- <p>오늘도 열심히 공부 중! 💪</p>
++ <p>바인드 마운트 수정 테스트 성공!</p>
+```
+
+**③ 변경 후** — 컨테이너 재시작·재빌드 없이 바로 반영됨
+
+```powershell
+PS C:\dev\dev-env-setup> type html\index.html -Encoding UTF8
+...
+<p>바인드 마운트 완벽 이해! ✨</p>
+<p>바인드 마운트 수정 테스트 성공!</p>
+...
+
+PS C:\dev\dev-env-setup> curl.exe http://localhost:8080
+...
+<p>바인드 마운트 완벽 이해! ✨</p>
+<p>바인드 마운트 수정 테스트 성공!</p>
+...
+```
+
+![변경 후 화면](images/12-bind-after2.png)
+
+**결론:** 호스트의 `html/` 폴더와 컨테이너의 `/usr/share/nginx/html`이 연결되어 있어서, 내 PC에서 파일을 고치면 컨테이너에 **즉시** 반영된다.
 ---
 
 ## 13. Docker 볼륨 영속성
 
 **볼륨:** Docker가 직접 관리하는 저장 공간. 컨테이너를 삭제해도 볼륨 안의 데이터는 남습니다.
 
-📝 TODO: 아래 명령을 순서대로 실행하고 결과를 붙여넣으세요.
+
 
 ```powershell
 # 1) 볼륨 생성 및 확인
 PS> docker volume create mydata
+mydata
 PS> docker volume ls
-(출력 붙여넣기)
+DRIVER    VOLUME NAME
+local     mydata
 
 # 2) 볼륨을 연결한 컨테이너 실행 후 데이터 쓰기
 PS> docker run -d --name vol-test -v mydata:/data ubuntu sleep infinity
+d5dbcab18cc857fad7a1dee56fbfebe867f0ae7fc745cb61b596727aff2ee0c3
 PS> docker exec vol-test bash -c "echo 'volume persistence test' > /data/hello.txt"
 PS> docker exec vol-test cat /data/hello.txt
 volume persistence test
 
-# 3) 컨테이너 삭제
+# 3) 컨테이너 삭제 → 목록에서 vol-test 사라짐
 PS> docker rm -f vol-test
+vol-test
 PS> docker ps -a
-(출력 붙여넣기 — vol-test 가 사라진 것 확인)
+CONTAINER ID   IMAGE          COMMAND                   CREATED          STATUS                      PORTS                                     NAMES
+1b80d62a6c0d   nginx:alpine   "/docker-entrypoint.…"   10 minutes ago   Up 10 minutes               0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   dev-web
+23ec7a648b72   ubuntu         "bash"                    22 minutes ago   Exited (0) 15 minutes ago                                             my-ubuntu
+a5f80fb3ec0b   hello-world    "/hello"                  23 minutes ago   Exited (0) 23 minutes ago                                             elastic_diffie
 
-# 4) 새 컨테이너에 같은 볼륨 연결 후 데이터 확인
+# 4) 새 컨테이너에 같은 볼륨 연결 → 데이터가 그대로 남아 있음
 PS> docker run -d --name vol-test2 -v mydata:/data ubuntu sleep infinity
+355fa5d7068e0d0335c6c30b8e0be5352bf7ba8a8a94ab2fe1868981cbae137f
 PS> docker exec vol-test2 cat /data/hello.txt
-(출력 붙여넣기 — 같은 문구가 나오면 성공!)
+volume persistence test
 ```
 
 **결론:** 컨테이너(`vol-test`)를 삭제한 뒤 새 컨테이너(`vol-test2`)에서도 `hello.txt`가 그대로 남아 있음 → 데이터가 컨테이너가 아닌 **볼륨에 저장**되기 때문.
