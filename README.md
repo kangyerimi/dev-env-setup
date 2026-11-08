@@ -439,7 +439,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ### 10.4 빌드 및 실행
 
-````powershell
+```powershell
 PS C:\dev\dev-env-setup> docker build -t dev-env-nginx:1.0 .
 [+] Building 0.5s (7/7) FINISHED                                     docker:desktop-linux
  => [internal] load build definition from Dockerfile                                0.0s
